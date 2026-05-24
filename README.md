@@ -52,18 +52,18 @@ flutter build apk        # Android
 `.github/workflows/deploy-pages.yml` builds and publishes the web app on push.
 One-time: **Settings → Pages → Source = GitHub Actions**.
 
-To point the hosted site at a real backend, add repository variables
+The app targets `https://babiauto.online/api/v1` by default (both for local
+runs and the deploy). Override it with repository variables/secrets
 (**Settings → Secrets and variables → Actions**):
 
 | Name | Kind | Example |
 |------|------|---------|
-| `API_BASE_URL` | variable | `https://api.babiauto.ci/api/v1` |
+| `API_BASE_URL` | variable | `https://babiauto.online/api/v1` |
 | `DEMO_EMAIL` | variable | `koffi@babiauto.ci` |
 | `DEMO_PASSWORD` | secret | `password` |
 
 The backend must be served over **HTTPS** and allow **CORS** from
-`https://<owner>.github.io`. When `API_BASE_URL` is unset the site runs against
-the bundled demo data.
+`https://<owner>.github.io`.
 
 ## Layout
 

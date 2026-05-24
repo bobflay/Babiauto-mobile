@@ -52,16 +52,16 @@ jobs:
       # base-href must match the path Pages serves from (e.g. /<repo>/ for a
       # project site). configure-pages exposes that as base_path.
       #
-      # Point the deployed site at a real backend by setting repo variables
-      # (Settings → Secrets and variables → Actions → Variables):
-      #   API_BASE_URL   e.g. https://api.babiauto.ci/api/v1   (must be HTTPS +
+      # The site targets the hosted API by default. Override the host (or the
+      # demo credentials) with repo variables/secrets
+      # (Settings → Secrets and variables → Actions):
+      #   API_BASE_URL   default https://babiauto.online/api/v1  (HTTPS + must
       #                  allow CORS from https://<owner>.github.io)
       #   DEMO_EMAIL     optional seeded rider email
-      # and optionally a secret DEMO_PASSWORD. When API_BASE_URL is unset the
-      # site runs against the bundled demo data.
+      # and optionally a secret DEMO_PASSWORD.
       - name: Build web
         env:
-          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          API_BASE_URL: ${{ vars.API_BASE_URL || 'https://babiauto.online/api/v1' }}
           DEMO_EMAIL: ${{ vars.DEMO_EMAIL }}
           DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
         run: |

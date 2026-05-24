@@ -7,7 +7,7 @@ class ApiConfig {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8000/api/v1',
+    defaultValue: 'https://babiauto.online/api/v1',
   );
 
   /// Demo rider seeded by `php artisan migrate --seed`.
