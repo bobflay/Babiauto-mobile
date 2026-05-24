@@ -58,6 +58,32 @@ class Strings {
   // A few extra strings the live app needs beyond the static prototype.
   String get tapToContinue => _p('appuyer pour continuer', 'tap to continue');
   String get locating => _p('Localisation…', 'Locating…');
+
+  // Account / profile
+  String get profile => _p('Profil', 'Profile');
+  String get editProfile => _p('Modifier le profil', 'Edit profile');
+  String get rideHistory => _p('Historique des trajets', 'Ride history');
+  String get language => _p('Langue', 'Language');
+  String get logout => _p('Déconnexion', 'Log out');
+  String get memberSince => _p('Membre depuis', 'Member since');
+  String get demoMode => _p('Mode démo · hors ligne', 'Demo mode · offline');
+  String get fullName => _p('Nom complet', 'Full name');
+  String get phone => _p('Téléphone', 'Phone');
+  String get email => _p('E-mail', 'Email');
+  String get initials => _p('Initiale', 'Initial');
+  String get save => _p('Enregistrer', 'Save');
+  String get addPlace => _p('Ajouter un lieu', 'Add a place');
+  String get addPayment => _p('Ajouter un moyen de paiement', 'Add payment method');
+  String get noSavedPlaces => _p('Aucun lieu enregistré', 'No saved places');
+  String get noPayments => _p('Aucun moyen de paiement', 'No payment methods');
+  String get noRides => _p('Aucun trajet pour le moment', 'No trips yet');
+  String get defaultLabel => _p('Par défaut', 'Default');
+  String get setDefault => _p('Définir par défaut', 'Set as default');
+  String get provider => _p('Opérateur', 'Provider');
+  String get cardLast4 => _p('4 derniers chiffres', 'Last 4 digits');
+  String get label => _p('Libellé', 'Label');
+  String get statusCompleted => _p('Terminé', 'Completed');
+  String get statusCancelled => _p('Annulé', 'Cancelled');
   String get suggest => _p('Suggérer', 'Suggest');
   String get add => _p('Ajouter', 'Add');
   String get noResults => _p('Aucun résultat', 'No results');

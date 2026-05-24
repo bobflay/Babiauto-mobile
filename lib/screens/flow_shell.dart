@@ -6,6 +6,7 @@ import '../models/driver.dart';
 import '../models/place.dart';
 import '../state/app_state.dart';
 import '../widgets/device_frame.dart';
+import 'account/profile_screen.dart';
 import 'arriving_screen.dart';
 import 'complete_screen.dart';
 import 'finding_screen.dart';
@@ -15,33 +16,46 @@ import 'search_screen.dart';
 import 'splash_screen.dart';
 import 'vehicle_screen.dart';
 
-/// Drives the 8-step flow off [AppState.step], mirroring the prototype's
-/// state machine, wrapped in the responsive [DeviceFrame].
+/// Hosts the flow inside the responsive [DeviceFrame]. A nested [Navigator]
+/// keeps pushed account screens within the phone frame on web/desktop.
 class FlowShell extends StatelessWidget {
   const FlowShell({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final app = context.watch<AppState>();
     return Scaffold(
       backgroundColor: const Color(0xFF1F1B17),
       body: DeviceFrame(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 240),
-          switchInCurve: Curves.easeOut,
-          transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
-          child: KeyedSubtree(
-            key: ValueKey(app.step),
-            child: _screenFor(context, app),
+        child: Navigator(
+          onGenerateRoute: (settings) => MaterialPageRoute(
+            settings: settings,
+            builder: (_) => const _FlowRoot(),
           ),
         ),
       ),
     );
   }
+}
 
-  Driver get _driver => DemoData.driver;
+/// Drives the 8-step ride flow off [AppState.step].
+class _FlowRoot extends StatelessWidget {
+  const _FlowRoot();
 
-  Driver _activeDriver(AppState app) => app.ride?.driver ?? _driver;
+  @override
+  Widget build(BuildContext context) {
+    final app = context.watch<AppState>();
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 240),
+      switchInCurve: Curves.easeOut,
+      transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+      child: KeyedSubtree(key: ValueKey(app.step), child: _screenFor(context, app)),
+    );
+  }
+
+  Driver _activeDriver(AppState app) => app.ride?.driver ?? DemoData.driver;
+
+  void _openProfile(BuildContext context) =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
 
   Widget _screenFor(BuildContext context, AppState app) {
     final t = app.t;
@@ -60,6 +74,7 @@ class FlowShell extends StatelessWidget {
           onSearch: () => app.go(FlowStep.search),
           onSavedPick: () => app.chooseDestination(_bureau),
           onRecenter: app.detectLocation,
+          onProfile: () => _openProfile(context),
         );
 
       case FlowStep.search:

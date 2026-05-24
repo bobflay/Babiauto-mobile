@@ -20,6 +20,7 @@ class HomeScreen extends StatelessWidget {
   final VoidCallback onSavedPick;
   final VoidCallback? onRecenter;
   final VoidCallback? onMenu;
+  final VoidCallback? onProfile;
 
   const HomeScreen({
     super.key,
@@ -33,6 +34,7 @@ class HomeScreen extends StatelessWidget {
     required this.onSavedPick,
     this.onRecenter,
     this.onMenu,
+    this.onProfile,
   });
 
   @override
@@ -44,7 +46,7 @@ class HomeScreen extends StatelessWidget {
           Positioned.fill(
             child: RealMap(center: center, zoom: 15, dark: dark, user: center),
           ),
-          MapTopBar(dark: dark, initial: riderName.substring(0, 1), onMenu: onMenu),
+          MapTopBar(dark: dark, initial: riderName.substring(0, 1), onMenu: onMenu, onProfile: onProfile),
           // current-location pill
           Align(
             alignment: const Alignment(0, -0.28),

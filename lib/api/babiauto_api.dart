@@ -132,6 +132,21 @@ class BabiautoApi {
         await _send('GET', 'auth/me', auth: true),
       )));
 
+  // ── Profile ─────────────────────────────────────────────────────────────────
+  Future<User> profile() async => User.fromJson(Map<String, dynamic>.from(_data(
+        await _send('GET', 'profile', auth: true),
+      )));
+
+  Future<User> updateProfile({String? name, String? phone, String? language, String? avatarInitial}) async {
+    final body = await _send('PATCH', 'profile', auth: true, body: {
+      'name': ?name,
+      'phone': ?phone,
+      'language': ?language,
+      'avatar_initial': ?avatarInitial,
+    });
+    return User.fromJson(Map<String, dynamic>.from(_data(body)));
+  }
+
   // ── Catalogue ───────────────────────────────────────────────────────────────
   Future<List<VehicleClass>> vehicleClasses() async =>
       _list(await _send('GET', 'vehicle-classes')).map(VehicleClass.fromJson).toList();
@@ -207,12 +222,51 @@ class BabiautoApi {
   Future<Ride> startTrip(int id) => _lifecycle(id, 'start');
   Future<Ride> completeTrip(int id) => _lifecycle(id, 'complete');
 
-  // ── Rider profile extras ────────────────────────────────────────────────────
+  // ── Saved places ────────────────────────────────────────────────────────────
   Future<List<SavedPlace>> savedPlaces() async =>
       _list(await _send('GET', 'saved-places', auth: true)).map(SavedPlace.fromJson).toList();
 
+  Future<SavedPlace> addSavedPlace({
+    required String label,
+    required String icon,
+    required String name,
+    String? subtitle,
+    required double lat,
+    required double lng,
+  }) async {
+    final body = await _send('POST', 'saved-places', auth: true, body: {
+      'label': label,
+      'icon': icon,
+      'name': name,
+      'subtitle': ?subtitle,
+      'lat': lat,
+      'lng': lng,
+    });
+    return SavedPlace.fromJson(Map<String, dynamic>.from(_data(body)));
+  }
+
+  Future<void> deleteSavedPlace(int id) async => _send('DELETE', 'saved-places/$id', auth: true);
+
+  // ── Payment methods ───────────────────────────────────────────────────────────
   Future<List<PaymentMethod>> paymentMethods() async =>
       _list(await _send('GET', 'payment-methods', auth: true)).map(PaymentMethod.fromJson).toList();
+
+  Future<PaymentMethod> addPaymentMethod({
+    required String type,
+    String? provider,
+    String? last4,
+    bool isDefault = false,
+  }) async {
+    final body = await _send('POST', 'payment-methods', auth: true, body: {
+      'type': type,
+      'provider': ?provider,
+      'last4': ?last4,
+      'is_default': isDefault,
+    });
+    return PaymentMethod.fromJson(Map<String, dynamic>.from(_data(body)));
+  }
+
+  Future<void> deletePaymentMethod(int id) async => _send('DELETE', 'payment-methods/$id', auth: true);
 
   void close() => _client.close();
 }

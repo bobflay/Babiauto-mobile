@@ -5,10 +5,13 @@ import 'package:babiauto/screens/home_screen.dart';
 import 'package:babiauto/screens/search_screen.dart';
 import 'package:babiauto/screens/vehicle_screen.dart';
 import 'package:babiauto/theme/app_theme.dart';
+import 'package:babiauto/screens/account/profile_screen.dart';
+import 'package:babiauto/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
 
 const t = Strings(Lang.fr);
 const _pickup = LatLng(5.356, -3.987);
@@ -88,6 +91,17 @@ void main() {
     )));
     await tester.pump();
     expect(find.text('Kouassi A.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('ProfileScreen builds', (tester) async {
+    await tester.pumpWidget(ChangeNotifierProvider(
+      create: (_) => AppState(),
+      child: _wrap(const ProfileScreen()),
+    ));
+    await tester.pump();
+    expect(find.text('Profil'), findsOneWidget);
+    expect(find.text('Modifier le profil'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

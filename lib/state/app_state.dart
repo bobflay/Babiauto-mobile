@@ -7,8 +7,10 @@ import '../api/api_exception.dart';
 import '../api/babiauto_api.dart';
 import '../data/demo_data.dart';
 import '../i18n/strings.dart';
+import '../models/payment_method.dart';
 import '../models/place.dart';
 import '../models/ride.dart';
+import '../models/saved_place.dart';
 import '../models/user.dart';
 import '../models/vehicle_class.dart';
 import '../services/geo_service.dart';
@@ -303,6 +305,161 @@ class AppState extends ChangeNotifier {
       _locating = false;
       notifyListeners();
     }
+  }
+
+  // ── Account: profile, saved places, payment methods, history ────────────────
+  List<SavedPlace> _savedPlaces = [];
+  List<SavedPlace> get savedPlaces => _savedPlaces;
+  List<PaymentMethod> _paymentMethods = [];
+  List<PaymentMethod> get paymentMethods => _paymentMethods;
+  List<Ride> _rideHistory = [];
+  List<Ride> get rideHistory => _rideHistory;
+
+  Future<void> updateProfile({String? name, String? phone, String? avatarInitial, Lang? language}) async {
+    if (language != null) _lang = language;
+    final langCode = language?.name;
+    if (_online) {
+      try {
+        _user = await _api.updateProfile(
+          name: name,
+          phone: phone,
+          language: langCode,
+          avatarInitial: avatarInitial,
+        );
+        notifyListeners();
+        return;
+      } catch (_) {/* fall back to local */}
+    }
+    final cur = _user;
+    _user = User(
+      id: cur?.id ?? 0,
+      name: name ?? cur?.name ?? riderName,
+      email: cur?.email ?? '',
+      phone: phone ?? cur?.phone,
+      language: langCode ?? cur?.language ?? _lang.name,
+      avatarInitial: avatarInitial ?? cur?.avatarInitial ?? '',
+      createdAt: cur?.createdAt,
+    );
+    notifyListeners();
+  }
+
+  void changeLanguage(Lang l) {
+    if (_lang == l) return;
+    _lang = l;
+    notifyListeners();
+    if (_online) {
+      _api.updateProfile(language: l.name).then((u) {
+        _user = u;
+        notifyListeners();
+      }).catchError((_) {});
+    }
+  }
+
+  Future<void> loadSavedPlaces() async {
+    try {
+      final remote = await _api.savedPlaces();
+      _savedPlaces = (remote.isNotEmpty || _online) ? remote : DemoData.savedPlaces;
+    } catch (_) {
+      _savedPlaces = DemoData.savedPlaces;
+    }
+    notifyListeners();
+  }
+
+  Future<void> addSavedPlace(SavedPlace place) async {
+    if (_online) {
+      try {
+        final created = await _api.addSavedPlace(
+          label: place.label,
+          icon: place.icon,
+          name: place.name,
+          subtitle: place.subtitle,
+          lat: place.lat,
+          lng: place.lng,
+        );
+        _savedPlaces = [..._savedPlaces, created];
+        notifyListeners();
+        return;
+      } catch (_) {/* fall back to local */}
+    }
+    _savedPlaces = [..._savedPlaces, place];
+    notifyListeners();
+  }
+
+  Future<void> removeSavedPlace(SavedPlace place) async {
+    if (_online && place.id != null) {
+      try {
+        await _api.deleteSavedPlace(place.id!);
+      } catch (_) {/* best-effort */}
+    }
+    _savedPlaces = _savedPlaces.where((e) => !identical(e, place)).toList();
+    notifyListeners();
+  }
+
+  Future<void> loadPaymentMethods() async {
+    try {
+      final remote = await _api.paymentMethods();
+      _paymentMethods = (remote.isNotEmpty || _online) ? remote : DemoData.paymentMethods;
+    } catch (_) {
+      _paymentMethods = DemoData.paymentMethods;
+    }
+    notifyListeners();
+  }
+
+  Future<void> addPaymentMethod(PaymentMethod method) async {
+    if (_online) {
+      try {
+        final created = await _api.addPaymentMethod(
+          type: method.type,
+          provider: method.provider,
+          last4: method.last4,
+          isDefault: method.isDefault,
+        );
+        _paymentMethods = [..._paymentMethods, created];
+        notifyListeners();
+        return;
+      } catch (_) {/* fall back to local */}
+    }
+    _paymentMethods = [..._paymentMethods, method];
+    notifyListeners();
+  }
+
+  Future<void> removePaymentMethod(PaymentMethod method) async {
+    if (_online && method.id != null) {
+      try {
+        await _api.deletePaymentMethod(method.id!);
+      } catch (_) {/* best-effort */}
+    }
+    _paymentMethods = _paymentMethods.where((e) => !identical(e, method)).toList();
+    notifyListeners();
+  }
+
+  Future<void> loadRideHistory() async {
+    try {
+      final remote = await _api.rides();
+      _rideHistory = (remote.isNotEmpty || _online) ? remote : DemoData.rideHistory;
+    } catch (_) {
+      _rideHistory = DemoData.rideHistory;
+    }
+    notifyListeners();
+  }
+
+  Future<void> logout() async {
+    if (_online) {
+      try {
+        await _api.logout();
+      } catch (_) {/* best-effort */}
+    }
+    _online = false;
+    _user = null;
+    _savedPlaces = [];
+    _paymentMethods = [];
+    _rideHistory = [];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_tokenKey);
+    } catch (_) {/* ignore */}
+    resetFlow();
+    go(FlowStep.home);
   }
 
   @override
