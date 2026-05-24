@@ -15,6 +15,7 @@ class HomeScreen extends StatelessWidget {
   final String riderName;
   final LatLng center;
   final String locationLabel;
+  final bool locating;
   final VoidCallback onSearch;
   final VoidCallback onSavedPick;
   final VoidCallback? onRecenter;
@@ -27,6 +28,7 @@ class HomeScreen extends StatelessWidget {
     required this.riderName,
     required this.center,
     required this.locationLabel,
+    this.locating = false,
     required this.onSearch,
     required this.onSavedPick,
     this.onRecenter,
@@ -47,16 +49,32 @@ class HomeScreen extends StatelessWidget {
           Align(
             alignment: const Alignment(0, -0.28),
             child: Container(
+              constraints: const BoxConstraints(maxWidth: 280),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.ink,
                 borderRadius: BorderRadius.circular(999),
                 boxShadow: const [BoxShadow(color: Color(0x40000000), blurRadius: 12, offset: Offset(0, 4))],
               ),
-              child: Text(locationLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTheme.manrope(size: 12, weight: FontWeight.w600, color: Colors.white)),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (locating) ...[
+                    const SizedBox(
+                      width: 11,
+                      height: 11,
+                      child: CircularProgressIndicator(strokeWidth: 1.8, color: Colors.white),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Flexible(
+                    child: Text(locating ? t.locating : locationLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTheme.manrope(size: 12, weight: FontWeight.w600, color: Colors.white)),
+                  ),
+                ],
+              ),
             ),
           ),
           // recenter

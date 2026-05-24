@@ -56,6 +56,7 @@ class FlowShell extends StatelessWidget {
           riderName: app.riderName,
           center: app.pickupLatLng,
           locationLabel: app.pickup.name,
+          locating: app.locating,
           onSearch: () => app.go(FlowStep.search),
           onSavedPick: () => app.chooseDestination(_bureau),
           onRecenter: app.detectLocation,

@@ -68,6 +68,8 @@ class AppState extends ChangeNotifier {
 
   LatLng? _currentLatLng;
   LatLng? get currentLatLng => _currentLatLng;
+  bool _locating = false;
+  bool get locating => _locating;
   LatLng get pickupLatLng => LatLng(_pickup.lat, _pickup.lng);
   LatLng? get destinationLatLng =>
       _destination == null ? null : LatLng(_destination!.lat, _destination!.lng);
@@ -285,16 +287,22 @@ class AppState extends ChangeNotifier {
   /// Detect the rider's real position and use it as the pickup, with a
   /// best-effort reverse-geocoded label. No-op when location is unavailable.
   Future<void> detectLocation() async {
-    final pos = await _location.current();
-    if (pos == null) return;
-    _currentLatLng = pos;
-
-    var label = _lang == Lang.fr ? 'Position actuelle' : 'Current location';
-    final reversed = await _geo.reverseLabel(pos, language: _lang.name);
-    if (reversed != null && reversed.isNotEmpty) label = reversed;
-
-    _pickup = Place(name: label, subtitle: label, lat: pos.latitude, lng: pos.longitude);
+    _locating = true;
     notifyListeners();
+    try {
+      final pos = await _location.current();
+      if (pos == null) return;
+      _currentLatLng = pos;
+
+      var label = _lang == Lang.fr ? 'Position actuelle' : 'Current location';
+      final reversed = await _geo.reverseLabel(pos, language: _lang.name);
+      if (reversed != null && reversed.isNotEmpty) label = reversed;
+
+      _pickup = Place(name: label, subtitle: label, lat: pos.latitude, lng: pos.longitude);
+    } finally {
+      _locating = false;
+      notifyListeners();
+    }
   }
 
   @override

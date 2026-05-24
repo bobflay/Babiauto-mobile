@@ -57,6 +57,7 @@ class Strings {
 
   // A few extra strings the live app needs beyond the static prototype.
   String get tapToContinue => _p('appuyer pour continuer', 'tap to continue');
+  String get locating => _p('Localisation…', 'Locating…');
   String get suggest => _p('Suggérer', 'Suggest');
   String get add => _p('Ajouter', 'Add');
   String get noResults => _p('Aucun résultat', 'No results');

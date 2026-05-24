@@ -51,10 +51,27 @@ jobs:
 
       # base-href must match the path Pages serves from (e.g. /<repo>/ for a
       # project site). configure-pages exposes that as base_path.
+      #
+      # Point the deployed site at a real backend by setting repo variables
+      # (Settings → Secrets and variables → Actions → Variables):
+      #   API_BASE_URL   e.g. https://api.babiauto.ci/api/v1   (must be HTTPS +
+      #                  allow CORS from https://<owner>.github.io)
+      #   DEMO_EMAIL     optional seeded rider email
+      # and optionally a secret DEMO_PASSWORD. When API_BASE_URL is unset the
+      # site runs against the bundled demo data.
       - name: Build web
-        run: >-
-          flutter build web --release --no-tree-shake-icons
-          --base-href "${{ steps.pages.outputs.base_path }}/"
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          DEMO_EMAIL: ${{ vars.DEMO_EMAIL }}
+          DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
+        run: |
+          DEFINES=""
+          [ -n "$API_BASE_URL" ] && DEFINES="$DEFINES --dart-define=API_BASE_URL=$API_BASE_URL"
+          [ -n "$DEMO_EMAIL" ] && DEFINES="$DEFINES --dart-define=DEMO_EMAIL=$DEMO_EMAIL"
+          [ -n "$DEMO_PASSWORD" ] && DEFINES="$DEFINES --dart-define=DEMO_PASSWORD=$DEMO_PASSWORD"
+          echo "Building with defines:${DEFINES:- (none — demo data)}"
+          flutter build web --release --no-tree-shake-icons \
+            --base-href "${{ steps.pages.outputs.base_path }}/" $DEFINES
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
