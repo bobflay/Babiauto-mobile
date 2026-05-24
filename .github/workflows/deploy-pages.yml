@@ -1,0 +1,73 @@
+name: Deploy web to GitHub Pages
+
+# Builds the Flutter web app and publishes build/web to GitHub Pages.
+#
+# One-time setup: repository Settings → Pages → Build and deployment →
+# Source = "GitHub Actions" (the configure-pages step below also attempts to
+# enable this automatically via `enablement: true`).
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - claude/flutter-babiauto-api-Kwr7Z
+  workflow_dispatch:
+
+# Allow the deploy job to publish to Pages via OIDC.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time; newer pushes supersede in-flight runs.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.0
+          cache: true
+
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+        with:
+          # Attempt to switch the Pages source to GitHub Actions automatically.
+          enablement: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # base-href must match the path Pages serves from (e.g. /<repo>/ for a
+      # project site). configure-pages exposes that as base_path.
+      - name: Build web
+        run: >-
+          flutter build web --release --no-tree-shake-icons
+          --base-href "${{ steps.pages.outputs.base_path }}/"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
