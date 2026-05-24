@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../i18n/strings.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/babi_icon.dart';
-import '../widgets/babi_map.dart';
 import '../widgets/common.dart';
 import '../widgets/map_chrome.dart';
+import '../widgets/real_map.dart';
 
 class HomeScreen extends StatelessWidget {
   final Strings t;
   final bool dark;
   final String riderName;
+  final LatLng center;
+  final String locationLabel;
   final VoidCallback onSearch;
   final VoidCallback onSavedPick;
+  final VoidCallback? onRecenter;
   final VoidCallback? onMenu;
 
   const HomeScreen({
@@ -21,8 +25,11 @@ class HomeScreen extends StatelessWidget {
     required this.t,
     required this.dark,
     required this.riderName,
+    required this.center,
+    required this.locationLabel,
     required this.onSearch,
     required this.onSavedPick,
+    this.onRecenter,
     this.onMenu,
   });
 
@@ -32,12 +39,8 @@ class HomeScreen extends StatelessWidget {
       color: dark ? AppColors.mapLandDark : AppColors.mapLand,
       child: Stack(
         children: [
-          const Positioned.fill(
-            child: BabiMap(
-              pickup: Offset(200, 270),
-              showRoute: false,
-              showDropoff: false,
-            ),
+          Positioned.fill(
+            child: RealMap(center: center, zoom: 15, dark: dark, user: center),
           ),
           MapTopBar(dark: dark, initial: riderName.substring(0, 1), onMenu: onMenu),
           // current-location pill
@@ -50,7 +53,9 @@ class HomeScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
                 boxShadow: const [BoxShadow(color: Color(0x40000000), blurRadius: 12, offset: Offset(0, 4))],
               ),
-              child: Text('Cocody · Riviera Golf',
+              child: Text(locationLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTheme.manrope(size: 12, weight: FontWeight.w600, color: Colors.white)),
             ),
           ),
@@ -59,6 +64,7 @@ class HomeScreen extends StatelessWidget {
             alignment: const Alignment(0.92, 0.34),
             child: FloatButton(
               dark: dark,
+              onTap: onRecenter,
               child: BabiIcon('crosshair', size: 20, color: dark ? Colors.white : AppColors.ink),
             ),
           ),

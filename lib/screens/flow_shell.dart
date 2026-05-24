@@ -54,13 +54,17 @@ class FlowShell extends StatelessWidget {
           t: t,
           dark: app.darkMap,
           riderName: app.riderName,
+          center: app.pickupLatLng,
+          locationLabel: app.pickup.name,
           onSearch: () => app.go(FlowStep.search),
           onSavedPick: () => app.chooseDestination(_bureau),
+          onRecenter: app.detectLocation,
         );
 
       case FlowStep.search:
         return SearchScreen(
           t: t,
+          pickupName: app.pickup.name,
           onBack: () => app.go(FlowStep.home),
           onPick: app.chooseDestination,
           search: app.searchPlaces,
@@ -71,6 +75,10 @@ class FlowShell extends StatelessWidget {
           t: t,
           dark: app.darkMap,
           destName: app.destination?.name ?? 'Aéroport Félix-Houphouët-Boigny',
+          pickupName: app.pickup.name,
+          pickupLatLng: app.pickupLatLng,
+          dropLatLng: app.destinationLatLng ?? app.pickupLatLng,
+          route: app.routePoints,
           classes: app.vehicleClasses,
           priceFor: app.priceFor,
           etaFor: app.etaFor,
@@ -88,6 +96,7 @@ class FlowShell extends StatelessWidget {
         return FindingScreen(
           t: t,
           dark: app.darkMap,
+          center: app.pickupLatLng,
           distanceKm: q?.distanceKm ?? app.ride?.distanceKm ?? 14.2,
           durationMinutes: q?.durationMinutes ?? app.ride?.durationMinutes ?? 28,
           driverEtaMinutes: q?.driverEtaMinutes ?? app.etaFor(app.vehicleSlug),
@@ -106,6 +115,7 @@ class FlowShell extends StatelessWidget {
           t: t,
           dark: app.darkMap,
           driver: _activeDriver(app),
+          pickup: app.pickupLatLng,
           onStartTrip: () {
             app.startTrip();
             app.go(FlowStep.ontrip);
@@ -121,8 +131,11 @@ class FlowShell extends StatelessWidget {
           t: t,
           dark: app.darkMap,
           driver: _activeDriver(app),
-          originLabel: 'Cocody · Riviera',
-          destLabel: _shortDest(app.destination),
+          pickup: app.pickupLatLng,
+          dropoff: app.destinationLatLng ?? app.pickupLatLng,
+          route: app.routePoints,
+          originLabel: app.pickup.name,
+          destLabel: app.destination?.name ?? _shortDest(app.destination),
           onComplete: () {
             app.completeTrip();
             app.go(FlowStep.complete);
@@ -138,6 +151,8 @@ class FlowShell extends StatelessWidget {
           t: t,
           driver: _activeDriver(app),
           paymentType: app.paymentType,
+          pickupName: app.pickup.name,
+          destName: app.destination?.name ?? 'Aéroport Félix-Houphouët-Boigny',
           baseFare: base,
           airportFee: airport,
           distanceKm: ride?.distanceKm ?? q?.distanceKm ?? 14.2,

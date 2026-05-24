@@ -1,17 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../i18n/strings.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/babi_icon.dart';
-import '../widgets/babi_map.dart';
 import '../widgets/common.dart';
+import '../widgets/real_map.dart';
 
 class FindingScreen extends StatefulWidget {
   final Strings t;
   final bool dark;
+  final LatLng center;
   final double distanceKm;
   final int durationMinutes;
   final int driverEtaMinutes;
@@ -22,6 +24,7 @@ class FindingScreen extends StatefulWidget {
     super.key,
     required this.t,
     required this.dark,
+    required this.center,
     required this.distanceKm,
     required this.durationMinutes,
     required this.driverEtaMinutes,
@@ -62,13 +65,7 @@ class _FindingScreenState extends State<FindingScreen> with TickerProviderStateM
       child: Stack(
         children: [
           Positioned.fill(
-            child: BabiMap(
-              dark: widget.dark,
-              pickup: const Offset(200, 300),
-              showRoute: false,
-              showDropoff: false,
-              showUser: false,
-            ),
+            child: RealMap(center: widget.center, dark: widget.dark, zoom: 15, interactive: false),
           ),
           Align(
             alignment: const Alignment(0, -0.3),

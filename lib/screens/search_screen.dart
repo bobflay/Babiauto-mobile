@@ -11,6 +11,7 @@ import '../widgets/common.dart';
 
 class SearchScreen extends StatefulWidget {
   final Strings t;
+  final String pickupName;
   final VoidCallback onBack;
   final ValueChanged<Place> onPick;
   final Future<List<Place>> Function(String query) search;
@@ -18,6 +19,7 @@ class SearchScreen extends StatefulWidget {
   const SearchScreen({
     super.key,
     required this.t,
+    required this.pickupName,
     required this.onBack,
     required this.onPick,
     required this.search,
@@ -113,7 +115,7 @@ class _SearchScreenState extends State<SearchScreen> {
         children: [
           _FromToRow(
             label: widget.t.pickup,
-            value: 'Cocody · Riviera Golf',
+            value: widget.pickupName,
             dotColor: AppColors.green,
           ),
           Padding(

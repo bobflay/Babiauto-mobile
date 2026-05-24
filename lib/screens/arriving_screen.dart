@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../i18n/strings.dart';
 import '../models/driver.dart';
@@ -8,9 +9,9 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../util/format.dart';
 import '../widgets/babi_icon.dart';
-import '../widgets/babi_map.dart';
 import '../widgets/common.dart';
 import '../widgets/map_chrome.dart';
+import '../widgets/real_map.dart';
 
 const _avatarGradient = LinearGradient(
   begin: Alignment.topLeft,
@@ -22,6 +23,7 @@ class ArrivingScreen extends StatefulWidget {
   final Strings t;
   final bool dark;
   final Driver driver;
+  final LatLng pickup;
   final VoidCallback onStartTrip;
   final VoidCallback onCancel;
 
@@ -30,6 +32,7 @@ class ArrivingScreen extends StatefulWidget {
     required this.t,
     required this.dark,
     required this.driver,
+    required this.pickup,
     required this.onStartTrip,
     required this.onCancel,
   });
@@ -43,8 +46,9 @@ class _ArrivingScreenState extends State<ArrivingScreen> {
   Timer? _tick;
   Timer? _start;
 
-  static const _start0 = Offset(120, 100);
-  static const _end = Offset(200, 270);
+  /// Driver approaches the pickup from a point ~700 m to the north-east.
+  LatLng get _start0 => LatLng(widget.pickup.latitude + 0.006, widget.pickup.longitude + 0.006);
+  LatLng get _end => widget.pickup;
 
   @override
   void initState() {
@@ -65,42 +69,31 @@ class _ArrivingScreenState extends State<ArrivingScreen> {
     super.dispose();
   }
 
-  Offset get _carPos {
+  LatLng get _carPos {
     final progress = (3 - _eta) / 3;
-    return Offset.lerp(_start0, _end, progress)!;
+    return LatLng(
+      _start0.latitude + (_end.latitude - _start0.latitude) * progress,
+      _start0.longitude + (_end.longitude - _start0.longitude) * progress,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final car = _carPos;
     return Container(
       color: widget.dark ? AppColors.mapLandDark : AppColors.mapLand,
       child: Stack(
         children: [
           Positioned.fill(
-            child: BabiMap(
+            child: RealMap(
+              center: widget.pickup,
+              zoom: 15.5,
               dark: widget.dark,
-              pickup: _end,
-              showRoute: false,
-              showDropoff: false,
-              carPos: car,
-              carRotation: 60,
+              pickup: widget.pickup,
+              car: _carPos,
+              interactive: false,
             ),
           ),
           MapTopBar(dark: widget.dark),
-          Align(
-            alignment: Alignment(car.dx / kMapW * 2 - 1, (car.dy - 50) / kMapH * 2 - 1),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.ink,
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: const [BoxShadow(color: Color(0x40000000), blurRadius: 10, offset: Offset(0, 4))],
-              ),
-              child: Text('$_eta ${widget.t.min}',
-                  style: AppTheme.numeric(size: 11, weight: FontWeight.w700, color: Colors.white)),
-            ),
-          ),
           Align(alignment: Alignment.bottomCenter, child: _sheet()),
         ],
       ),

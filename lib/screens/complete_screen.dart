@@ -12,6 +12,8 @@ class CompleteScreen extends StatefulWidget {
   final Strings t;
   final Driver driver;
   final String paymentType;
+  final String pickupName;
+  final String destName;
   final int baseFare;
   final int airportFee;
   final double distanceKm;
@@ -23,6 +25,8 @@ class CompleteScreen extends StatefulWidget {
     required this.t,
     required this.driver,
     required this.paymentType,
+    required this.pickupName,
+    required this.destName,
     required this.baseFare,
     required this.airportFee,
     required this.distanceKm,
@@ -127,7 +131,7 @@ class _CompleteScreenState extends State<CompleteScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          _routeRow(AppColors.green, false, 'Cocody · Riviera Golf'),
+          _routeRow(AppColors.green, false, widget.pickupName),
           Padding(
             padding: const EdgeInsets.only(left: 4),
             child: Container(
@@ -137,7 +141,7 @@ class _CompleteScreenState extends State<CompleteScreen> {
               ),
             ),
           ),
-          _routeRow(AppColors.ink, true, 'Aéroport Félix-Houphouët-Boigny'),
+          _routeRow(AppColors.ink, true, widget.destName),
           _divider(14),
           _receiptRow(widget.t.baseFare, fcfaShort(widget.baseFare)),
           if (widget.airportFee > 0) _receiptRow(widget.t.airportFee, fcfaShort(widget.airportFee)),

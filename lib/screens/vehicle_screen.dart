@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../i18n/strings.dart';
 import '../models/vehicle_class.dart';
@@ -6,15 +7,19 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../util/format.dart';
 import '../widgets/babi_icon.dart';
-import '../widgets/babi_map.dart';
 import '../widgets/common.dart';
 import '../widgets/map_chrome.dart';
+import '../widgets/real_map.dart';
 import '../widgets/vehicle_art.dart';
 
 class VehicleScreen extends StatelessWidget {
   final Strings t;
   final bool dark;
   final String destName;
+  final String pickupName;
+  final LatLng pickupLatLng;
+  final LatLng dropLatLng;
+  final List<LatLng> route;
   final List<VehicleClass> classes;
   final int Function(String slug) priceFor;
   final int Function(String slug) etaFor;
@@ -31,6 +36,10 @@ class VehicleScreen extends StatelessWidget {
     required this.t,
     required this.dark,
     required this.destName,
+    required this.pickupName,
+    required this.pickupLatLng,
+    required this.dropLatLng,
+    required this.route,
     required this.classes,
     required this.priceFor,
     required this.etaFor,
@@ -49,11 +58,14 @@ class VehicleScreen extends StatelessWidget {
       color: dark ? AppColors.mapLandDark : AppColors.mapLand,
       child: Stack(
         children: [
-          const Positioned.fill(
-            child: BabiMap(
-              pickup: Offset(200, 230),
-              dropoff: Offset(260, 680),
-              showUser: false,
+          Positioned.fill(
+            child: RealMap(
+              center: pickupLatLng,
+              dark: dark,
+              pickup: pickupLatLng,
+              dropoff: dropLatLng,
+              route: route,
+              fitToRoute: true,
             ),
           ),
           MapTopBar(dark: dark, onMenu: onBack),
@@ -83,7 +95,7 @@ class VehicleScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _SummaryRow(dot: AppColors.green, label: 'Cocody · Riviera Golf', dark: dark),
+          _SummaryRow(dot: AppColors.green, label: pickupName, dark: dark),
           Padding(
             padding: const EdgeInsets.only(left: 22, top: 8, bottom: 8),
             child: Container(height: 1, color: AppColors.inkA(0.08)),

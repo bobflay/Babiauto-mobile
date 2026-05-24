@@ -1,19 +1,24 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../i18n/strings.dart';
 import '../models/driver.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
-import '../widgets/babi_map.dart';
+import '../util/geo.dart';
 import '../widgets/common.dart';
 import '../widgets/map_chrome.dart';
+import '../widgets/real_map.dart';
 
 class OnTripScreen extends StatefulWidget {
   final Strings t;
   final bool dark;
   final Driver driver;
+  final LatLng pickup;
+  final LatLng dropoff;
+  final List<LatLng> route;
   final String originLabel;
   final String destLabel;
   final VoidCallback onComplete;
@@ -23,6 +28,9 @@ class OnTripScreen extends StatefulWidget {
     required this.t,
     required this.dark,
     required this.driver,
+    required this.pickup,
+    required this.dropoff,
+    required this.route,
     required this.originLabel,
     required this.destLabel,
     required this.onComplete,
@@ -38,8 +46,7 @@ class _OnTripScreenState extends State<OnTripScreen> {
   Timer? _timer;
   Timer? _done;
 
-  static const _start = Offset(200, 230);
-  static const _end = Offset(260, 680);
+  List<LatLng> get _line => widget.route.length >= 2 ? widget.route : [widget.pickup, widget.dropoff];
 
   @override
   void initState() {
@@ -65,19 +72,21 @@ class _OnTripScreenState extends State<OnTripScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final car = Offset.lerp(_start, _end, _progress)!;
+    final car = pointAlongRoute(_line, _progress);
     return Container(
       color: widget.dark ? AppColors.mapLandDark : AppColors.mapLand,
       child: Stack(
         children: [
           Positioned.fill(
-            child: BabiMap(
+            child: RealMap(
+              center: car,
               dark: widget.dark,
-              pickup: _start,
-              dropoff: _end,
-              showUser: false,
-              carPos: car,
-              carRotation: 100,
+              pickup: widget.pickup,
+              dropoff: widget.dropoff,
+              route: widget.route,
+              car: car,
+              fitToRoute: true,
+              interactive: false,
             ),
           ),
           MapTopBar(dark: widget.dark),

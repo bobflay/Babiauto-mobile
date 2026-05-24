@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/api_config.dart';
@@ -10,14 +11,21 @@ import '../models/place.dart';
 import '../models/ride.dart';
 import '../models/user.dart';
 import '../models/vehicle_class.dart';
+import '../services/geo_service.dart';
+import '../services/location_service.dart';
 
 /// The 8-step demo flow, mirroring the prototype's state machine.
 enum FlowStep { splash, home, search, vehicles, finding, arriving, ontrip, complete }
 
 class AppState extends ChangeNotifier {
-  AppState({BabiautoApi? api}) : _api = api ?? BabiautoApi();
+  AppState({BabiautoApi? api, LocationService? location, GeoService? geo})
+      : _api = api ?? BabiautoApi(),
+        _location = location ?? LocationService(),
+        _geo = geo ?? GeoService();
 
   final BabiautoApi _api;
+  final LocationService _location;
+  final GeoService _geo;
   static const _tokenKey = 'babiauto_token';
 
   // ── Locale & theme ──────────────────────────────────────────────────────────
@@ -53,9 +61,19 @@ class AppState extends ChangeNotifier {
   FlowStep _step = FlowStep.splash;
   FlowStep get step => _step;
 
-  final Place pickup = DemoData.pickup;
+  Place _pickup = DemoData.pickup;
+  Place get pickup => _pickup;
   Place? _destination;
   Place? get destination => _destination;
+
+  LatLng? _currentLatLng;
+  LatLng? get currentLatLng => _currentLatLng;
+  LatLng get pickupLatLng => LatLng(_pickup.lat, _pickup.lng);
+  LatLng? get destinationLatLng =>
+      _destination == null ? null : LatLng(_destination!.lat, _destination!.lng);
+
+  List<LatLng> _route = [];
+  List<LatLng> get routePoints => _route;
 
   String _vehicleSlug = 'confort';
   String _paymentType = 'mobile';
@@ -88,12 +106,22 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Pick a destination, jump to the vehicle picker, and (re)load fare quotes.
+  /// Pick a destination, jump to the vehicle picker, and (re)load fare quotes
+  /// plus the driving route from the rider's real position.
   void chooseDestination(Place place) {
     _destination = place;
     _quotes = [];
+    _route = [];
     go(FlowStep.vehicles);
     loadQuotes();
+    _loadRoute();
+  }
+
+  Future<void> _loadRoute() async {
+    final dest = _destination;
+    if (dest == null) return;
+    _route = await _geo.route(pickupLatLng, LatLng(dest.lat, dest.lng));
+    notifyListeners();
   }
 
   /// Per-class price for the vehicle picker (quote total, else demo price).
@@ -168,6 +196,9 @@ class AppState extends ChangeNotifier {
       }
     } catch (_) {/* fully offline */}
     notifyListeners();
+
+    // Ask for the rider's real position (browser/OS prompt). Best-effort.
+    await detectLocation();
   }
 
   // ── Place search ────────────────────────────────────────────────────────────
@@ -246,12 +277,30 @@ class AppState extends ChangeNotifier {
   void resetFlow() {
     _destination = null;
     _quotes = [];
+    _route = [];
     _ride = null;
+  }
+
+  // ── Geolocation ─────────────────────────────────────────────────────────────
+  /// Detect the rider's real position and use it as the pickup, with a
+  /// best-effort reverse-geocoded label. No-op when location is unavailable.
+  Future<void> detectLocation() async {
+    final pos = await _location.current();
+    if (pos == null) return;
+    _currentLatLng = pos;
+
+    var label = _lang == Lang.fr ? 'Position actuelle' : 'Current location';
+    final reversed = await _geo.reverseLabel(pos, language: _lang.name);
+    if (reversed != null && reversed.isNotEmpty) label = reversed;
+
+    _pickup = Place(name: label, subtitle: label, lat: pos.latitude, lng: pos.longitude);
+    notifyListeners();
   }
 
   @override
   void dispose() {
     _api.close();
+    _geo.close();
     super.dispose();
   }
 }

@@ -8,8 +8,11 @@ import 'package:babiauto/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:latlong2/latlong.dart';
 
 const t = Strings(Lang.fr);
+const _pickup = LatLng(5.356, -3.987);
+const _drop = LatLng(5.2614, -3.9263);
 
 Widget _wrap(Widget child) => MaterialApp(theme: AppTheme.build(), home: Scaffold(body: child));
 
@@ -21,6 +24,8 @@ void main() {
       t: t,
       dark: false,
       riderName: 'Koffi',
+      center: _pickup,
+      locationLabel: 'Cocody · Riviera Golf',
       onSearch: () {},
       onSavedPick: () {},
     )));
@@ -32,6 +37,7 @@ void main() {
   testWidgets('SearchScreen builds and lists demo places', (tester) async {
     await tester.pumpWidget(_wrap(SearchScreen(
       t: t,
+      pickupName: 'Cocody · Riviera Golf',
       onBack: () {},
       onPick: (_) {},
       search: (q) async => DemoData.places,
@@ -47,6 +53,10 @@ void main() {
       t: t,
       dark: false,
       destName: 'Aéroport Félix-Houphouët-Boigny',
+      pickupName: 'Cocody · Riviera Golf',
+      pickupLatLng: _pickup,
+      dropLatLng: _drop,
+      route: const [_pickup, _drop],
       classes: DemoData.vehicleClasses,
       priceFor: DemoData.demoPrice,
       etaFor: (s) => 4,
@@ -68,6 +78,8 @@ void main() {
       t: t,
       driver: DemoData.driver,
       paymentType: 'mobile',
+      pickupName: 'Cocody · Riviera Golf',
+      destName: 'Aéroport Félix-Houphouët-Boigny',
       baseFare: 2100,
       airportFee: 400,
       distanceKm: 14.2,
