@@ -29,7 +29,7 @@ class NearbyCarsLayer extends StatefulWidget {
     required this.fetch,
     this.vehicleClass,
     this.onSimulated,
-    this.interval = const Duration(seconds: 4),
+    this.interval = const Duration(seconds: 5),
   });
 
   @override
@@ -50,8 +50,13 @@ class _NearbyCarsLayerState extends State<NearbyCarsLayer>
   final Map<int, _Track> _tracks = {};
   Timer? _timer;
   bool _polling = false;
-  late final AnimationController _anim =
-      AnimationController(vsync: this, duration: widget.interval)..addListener(_onTick);
+  // Glide over a window wider than the poll interval so cars ease toward the
+  // latest position at a calmer pace (they track with a slight, intentional lag
+  // rather than darting the full jump each tick).
+  late final AnimationController _anim = AnimationController(
+    vsync: this,
+    duration: Duration(milliseconds: (widget.interval.inMilliseconds * 1.6).round()),
+  )..addListener(_onTick);
 
   @override
   void initState() {
@@ -147,8 +152,8 @@ class _NearbyCarsLayerState extends State<NearbyCarsLayer>
     final markers = _tracks.values.map((track) {
       return Marker(
         point: _lerpLatLng(track.from, track.to, t),
-        width: 30,
-        height: 30,
+        width: 34,
+        height: 34,
         child: _CarDot(
           vehicleClass: track.vehicleClass,
           headingDeg: _lerpAngle(track.fromHeading, track.toHeading, t),
@@ -174,17 +179,55 @@ class _CarDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _colors[vehicleClass] ?? AppColors.orange;
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 5, offset: Offset(0, 1))],
-      ),
-      alignment: Alignment.center,
-      child: Transform.rotate(
-        angle: headingDeg * math.pi / 180, // compass bearing → clockwise radians
-        child: Icon(Icons.navigation, size: 17, color: color),
-      ),
+    // Top-down car silhouette: rotates naturally to face its travel bearing.
+    return Transform.rotate(
+      angle: headingDeg * math.pi / 180, // compass bearing → clockwise radians
+      child: CustomPaint(size: const Size(34, 34), painter: _CarTopPainter(color)),
     );
   }
+}
+
+class _CarTopPainter extends CustomPainter {
+  final Color color;
+  _CarTopPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final body = RRect.fromRectAndRadius(
+      Rect.fromCenter(center: Offset(cx, cy), width: 14, height: 22),
+      const Radius.circular(4.5),
+    );
+
+    // soft drop shadow
+    canvas.drawRRect(
+      body.shift(const Offset(0, 1.5)),
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.20)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+    );
+    // body
+    canvas.drawRRect(body, Paint()..color = color);
+    // outline for contrast on any tile
+    canvas.drawRRect(
+      body,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.3
+        ..color = Colors.white.withValues(alpha: 0.9),
+    );
+    // windshield (front, toward travel direction) + rear window
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy - 5.5), width: 9, height: 4.5), const Radius.circular(2)),
+      Paint()..color = Colors.white.withValues(alpha: 0.85),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy + 5.5), width: 9, height: 4), const Radius.circular(2)),
+      Paint()..color = Colors.white.withValues(alpha: 0.45),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _CarTopPainter old) => old.color != color;
 }
