@@ -84,6 +84,19 @@ class Strings {
   String get label => _p('Libellé', 'Label');
   String get statusCompleted => _p('Terminé', 'Completed');
   String get statusCancelled => _p('Annulé', 'Cancelled');
+
+  // Auth
+  String get signIn => _p('Se connecter', 'Sign in');
+  String get createAccount => _p('Créer un compte', 'Create account');
+  String get password => _p('Mot de passe', 'Password');
+  String get guest => _p('Invité', 'Guest');
+  String get haveAccount => _p('Déjà un compte ?', 'Already have an account?');
+  String get noAccount => _p('Pas encore de compte ?', 'No account yet?');
+  String get signInPrompt => _p('Connectez-vous pour synchroniser vos trajets',
+      'Sign in to sync your trips');
+  String get welcomeBack => _p('Bon retour', 'Welcome back');
+  String get demoCredentials => _p('Démo', 'Demo');
+  String get optional => _p('optionnel', 'optional');
   String get suggest => _p('Suggérer', 'Suggest');
   String get add => _p('Ajouter', 'Add');
   String get noResults => _p('Aucun résultat', 'No results');

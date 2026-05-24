@@ -6,6 +6,7 @@ import 'package:babiauto/screens/search_screen.dart';
 import 'package:babiauto/screens/vehicle_screen.dart';
 import 'package:babiauto/theme/app_theme.dart';
 import 'package:babiauto/screens/account/profile_screen.dart';
+import 'package:babiauto/screens/auth/login_screen.dart';
 import 'package:babiauto/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -101,7 +102,18 @@ void main() {
     ));
     await tester.pump();
     expect(find.text('Profil'), findsOneWidget);
-    expect(find.text('Modifier le profil'), findsOneWidget);
+    expect(find.text('Se connecter'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('LoginScreen builds', (tester) async {
+    await tester.pumpWidget(ChangeNotifierProvider(
+      create: (_) => AppState(),
+      child: _wrap(const LoginScreen()),
+    ));
+    await tester.pump();
+    expect(find.text('Bon retour'), findsOneWidget);
+    expect(find.text('Créer un compte'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }

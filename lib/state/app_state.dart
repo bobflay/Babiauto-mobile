@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../api/api_config.dart';
 import '../api/api_exception.dart';
 import '../api/babiauto_api.dart';
 import '../data/demo_data.dart';
@@ -53,6 +52,7 @@ class AppState extends ChangeNotifier {
   User? _user;
   bool get online => _online;
   User? get user => _user;
+  bool get isAuthenticated => _online && _user != null;
   String get riderName => _user?.firstName ?? 'Koffi';
 
   // ── Catalogue ─────────────────────────────────────────────────────────────
@@ -164,8 +164,8 @@ class AppState extends ChangeNotifier {
       );
 
   // ── Bootstrap ─────────────────────────────────────────────────────────────
-  /// Best-effort: restore session, load catalogue, attempt silent demo login.
-  /// Never throws; on failure the app runs against bundled demo data.
+  /// Best-effort: restore a saved session and load the catalogue. Never throws;
+  /// without a valid session the app runs as a guest against demo data.
   Future<void> bootstrap() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -181,15 +181,6 @@ class AppState extends ChangeNotifier {
         }
       }
 
-      if (!_online) {
-        try {
-          final res = await _api.login(ApiConfig.demoEmail, ApiConfig.demoPassword);
-          _user = res.user;
-          _online = true;
-          await prefs.setString(_tokenKey, res.token);
-        } catch (_) {/* stay offline */}
-      }
-
       try {
         final classes = await _api.vehicleClasses();
         if (classes.isNotEmpty) _vehicleClasses = classes;
@@ -203,6 +194,54 @@ class AppState extends ChangeNotifier {
 
     // Ask for the rider's real position (browser/OS prompt). Best-effort.
     await detectLocation();
+  }
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  /// Returns `null` on success, or a human-readable error message.
+  Future<String?> login(String email, String password) async {
+    try {
+      final res = await _api.login(email.trim(), password);
+      await _onAuthenticated(res.user, res.token);
+      return null;
+    } on ApiException catch (e) {
+      return e.firstError ?? e.message;
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  Future<String?> register({
+    required String name,
+    required String email,
+    required String password,
+    String? phone,
+  }) async {
+    try {
+      final res = await _api.register(
+        name: name.trim(),
+        email: email.trim(),
+        password: password,
+        phone: (phone == null || phone.trim().isEmpty) ? null : phone.trim(),
+        language: _lang.name,
+      );
+      await _onAuthenticated(res.user, res.token);
+      return null;
+    } on ApiException catch (e) {
+      return e.firstError ?? e.message;
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  Future<void> _onAuthenticated(User user, String token) async {
+    _user = user;
+    _online = true;
+    _lang = user.language == 'en' ? Lang.en : Lang.fr;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_tokenKey, token);
+    } catch (_) {/* ignore */}
+    notifyListeners();
   }
 
   // ── Place search ────────────────────────────────────────────────────────────

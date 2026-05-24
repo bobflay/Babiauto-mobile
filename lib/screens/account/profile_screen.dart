@@ -7,6 +7,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/account_scaffold.dart';
 import '../../widgets/common.dart';
+import '../auth/login_screen.dart';
 import 'edit_profile_screen.dart';
 import 'payment_methods_screen.dart';
 import 'ride_history_screen.dart';
@@ -29,8 +30,9 @@ class ProfileScreen extends StatelessWidget {
     final app = context.watch<AppState>();
     final t = app.t;
     final user = app.user;
-    final initial = user?.initial ?? app.riderName[0].toUpperCase();
-    final name = user?.name ?? app.riderName;
+    final authed = app.isAuthenticated;
+    final name = authed ? (user?.name ?? app.riderName) : t.guest;
+    final initial = authed ? (user?.initial ?? 'K') : t.guest[0].toUpperCase();
 
     return AccountScaffold(
       title: t.profile,
@@ -38,10 +40,27 @@ class ProfileScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _header(t, initial, name, user?.email, user?.phone, user?.createdAt?.year),
+          _header(t, initial, name, authed ? user?.email : null, authed ? user?.phone : null,
+              authed ? user?.createdAt?.year : null),
+          if (!authed) ...[
+            const SizedBox(height: 14),
+            CtaButton(
+              orange: true,
+              onTap: () => _push(context, const LoginScreen()),
+              child: Text(t.signIn),
+            ),
+            const SizedBox(height: 8),
+            Center(
+              child: Text(t.signInPrompt,
+                  textAlign: TextAlign.center,
+                  style: AppTheme.manrope(size: 12, weight: FontWeight.w600, color: AppColors.ink3)),
+            ),
+          ],
           const SizedBox(height: 18),
-          MenuRow(icon: 'edit', label: t.editProfile, onTap: () => _push(context, const EditProfileScreen())),
-          const SizedBox(height: 10),
+          if (authed) ...[
+            MenuRow(icon: 'edit', label: t.editProfile, onTap: () => _push(context, const EditProfileScreen())),
+            const SizedBox(height: 10),
+          ],
           MenuRow(
             icon: 'star',
             label: t.saved,
@@ -55,18 +74,18 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 10),
           _languageRow(context, app, t),
           const SizedBox(height: 18),
-          MenuRow(
-            icon: 'logout',
-            label: t.logout,
-            tint: AppColors.rose,
-            trailing: const SizedBox.shrink(),
-            onTap: () async {
-              await app.logout();
-              if (context.mounted) Navigator.of(context).popUntil((r) => r.isFirst);
-            },
-          ),
-          const SizedBox(height: 12),
-          if (!app.online)
+          if (authed)
+            MenuRow(
+              icon: 'logout',
+              label: t.logout,
+              tint: AppColors.rose,
+              trailing: const SizedBox.shrink(),
+              onTap: () async {
+                await app.logout();
+                if (context.mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+              },
+            )
+          else
             Center(
               child: Text(t.demoMode,
                   style: AppTheme.manrope(size: 12, weight: FontWeight.w600, color: AppColors.ink3)),
