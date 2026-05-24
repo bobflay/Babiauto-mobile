@@ -67,6 +67,7 @@ class Strings {
   String get logout => _p('Déconnexion', 'Log out');
   String get memberSince => _p('Membre depuis', 'Member since');
   String get demoMode => _p('Mode démo · hors ligne', 'Demo mode · offline');
+  String get carsSimulated => _p('DÉMO · VOITURES SIMULÉES', 'DEMO · SIMULATED CARS');
   String get fullName => _p('Nom complet', 'Full name');
   String get phone => _p('Téléphone', 'Phone');
   String get email => _p('E-mail', 'Email');

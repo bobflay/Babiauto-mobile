@@ -6,6 +6,7 @@ import '../api/api_exception.dart';
 import '../api/babiauto_api.dart';
 import '../data/demo_data.dart';
 import '../i18n/strings.dart';
+import '../models/nearby_driver.dart';
 import '../models/payment_method.dart';
 import '../models/place.dart';
 import '../models/ride.dart';
@@ -243,6 +244,13 @@ class AppState extends ChangeNotifier {
     } catch (_) {/* ignore */}
     notifyListeners();
   }
+
+  // ── Nearby cars (live map) ──────────────────────────────────────────────────
+  /// Live nearby cars around [center] (public endpoint). May throw on network
+  /// failure; the polling layer catches it and keeps its last-known markers,
+  /// while an empty success legitimately clears them.
+  Future<NearbyDriversResult> nearbyDrivers(LatLng center, {String? vehicleClass}) =>
+      _api.nearbyDrivers(lat: center.latitude, lng: center.longitude, vehicleClass: vehicleClass);
 
   // ── Place search ────────────────────────────────────────────────────────────
   Future<List<Place>> searchPlaces(String query) async {

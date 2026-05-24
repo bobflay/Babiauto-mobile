@@ -2,12 +2,14 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../models/nearby_driver.dart';
 import '../models/payment_method.dart';
 import '../models/place.dart';
 import '../models/ride.dart';
 import '../models/saved_place.dart';
 import '../models/user.dart';
 import '../models/vehicle_class.dart';
+import '../util/json.dart';
 import 'api_config.dart';
 import 'api_exception.dart';
 
@@ -166,6 +168,25 @@ class BabiautoApi {
       'is_airport': ?isAirport,
     });
     return _list(body).map(FareQuote.fromJson).toList();
+  }
+
+  /// Live nearby cars around a point (public; positions only). Polled by the
+  /// home map. `meta.simulated` flags backend demo mode.
+  Future<NearbyDriversResult> nearbyDrivers({
+    required double lat,
+    required double lng,
+    String? vehicleClass,
+    int? limit,
+  }) async {
+    final body = await _send('GET', 'drivers/nearby', query: {
+      'lat': lat,
+      'lng': lng,
+      'vehicle_class': vehicleClass,
+      'limit': limit,
+    });
+    final drivers = _list(body).map(NearbyDriver.fromJson).toList();
+    final meta = (body is Map && body['meta'] is Map) ? Map<String, dynamic>.from(body['meta']) : const {};
+    return NearbyDriversResult(drivers, simulated: asBool(meta['simulated']));
   }
 
   // ── Rides ─────────────────────────────────────────────────────────────────

@@ -18,6 +18,10 @@ class RealMap extends StatefulWidget {
   final bool fitToRoute;
   final bool interactive;
 
+  /// Extra flutter_map layers (e.g. live nearby cars) drawn above the route
+  /// and below the pickup/drop/user markers.
+  final List<Widget> layers;
+
   const RealMap({
     super.key,
     required this.center,
@@ -30,6 +34,7 @@ class RealMap extends StatefulWidget {
     this.route = const [],
     this.fitToRoute = false,
     this.interactive = true,
+    this.layers = const [],
   });
 
   @override
@@ -105,6 +110,7 @@ class _RealMapState extends State<RealMap> {
               Polyline(points: route, strokeWidth: 5, color: AppColors.orange),
             ],
           ),
+        ...widget.layers,
         MarkerLayer(
           markers: [
             if (widget.pickup != null)

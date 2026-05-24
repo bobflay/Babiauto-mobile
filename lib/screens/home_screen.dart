@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../i18n/strings.dart';
+import '../models/nearby_driver.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/babi_icon.dart';
 import '../widgets/common.dart';
 import '../widgets/map_chrome.dart';
+import '../widgets/nearby_cars_layer.dart';
 import '../widgets/real_map.dart';
+
+typedef NearbyFetch = Future<NearbyDriversResult> Function(LatLng center, {String? vehicleClass});
 
 class HomeScreen extends StatelessWidget {
   final Strings t;
@@ -21,6 +25,7 @@ class HomeScreen extends StatelessWidget {
   final VoidCallback? onRecenter;
   final VoidCallback? onMenu;
   final VoidCallback? onProfile;
+  final NearbyFetch? nearby;
 
   const HomeScreen({
     super.key,
@@ -35,6 +40,7 @@ class HomeScreen extends StatelessWidget {
     this.onRecenter,
     this.onMenu,
     this.onProfile,
+    this.nearby,
   });
 
   @override
@@ -44,7 +50,7 @@ class HomeScreen extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(
-            child: RealMap(center: center, zoom: 15, dark: dark, user: center),
+            child: _HomeMap(t: t, center: center, dark: dark, nearby: nearby),
           ),
           MapTopBar(dark: dark, initial: riderName.substring(0, 1), onMenu: onMenu, onProfile: onProfile),
           // current-location pill
@@ -188,6 +194,85 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The map area: real tiles + live nearby cars, with a small "demo" hint when
+/// the backend reports simulated positions. Owns the simulated flag so the
+/// rest of [HomeScreen] can stay stateless.
+class _HomeMap extends StatefulWidget {
+  final Strings t;
+  final LatLng center;
+  final bool dark;
+  final NearbyFetch? nearby;
+  const _HomeMap({required this.t, required this.center, required this.dark, this.nearby});
+
+  @override
+  State<_HomeMap> createState() => _HomeMapState();
+}
+
+class _HomeMapState extends State<_HomeMap> {
+  bool _simulated = false;
+
+  void _setSimulated(bool v) {
+    if (v != _simulated && mounted) setState(() => _simulated = v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: RealMap(
+            center: widget.center,
+            zoom: 15,
+            dark: widget.dark,
+            user: widget.center,
+            layers: [
+              if (widget.nearby != null)
+                NearbyCarsLayer(
+                  center: widget.center,
+                  fetch: widget.nearby!,
+                  onSimulated: _setSimulated,
+                ),
+            ],
+          ),
+        ),
+        if (_simulated)
+          Align(
+            alignment: const Alignment(0, -0.92),
+            child: SafeArea(
+              child: Container(
+                margin: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.inkA(0.72),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const _Dot(),
+                    const SizedBox(width: 6),
+                    Text(widget.t.carsSimulated,
+                        style: AppTheme.manrope(size: 10, weight: FontWeight.w700, color: Colors.white, letterSpacing: 0.3)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _Dot extends StatelessWidget {
+  const _Dot();
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 6,
+        height: 6,
+        decoration: const BoxDecoration(color: AppColors.orange, shape: BoxShape.circle),
+      );
 }
 
 class _SavedTile extends StatelessWidget {

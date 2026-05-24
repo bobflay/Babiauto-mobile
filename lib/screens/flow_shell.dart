@@ -87,6 +87,7 @@ class _FlowRoot extends StatelessWidget {
           onSavedPick: () => _requireAuth(context, app, () => app.chooseDestination(_bureau)),
           onRecenter: app.detectLocation,
           onProfile: () => _openProfile(context),
+          nearby: app.nearbyDrivers,
         );
 
       case FlowStep.search:
