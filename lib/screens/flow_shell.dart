@@ -8,6 +8,7 @@ import '../state/app_state.dart';
 import '../widgets/device_frame.dart';
 import 'account/profile_screen.dart';
 import 'arriving_screen.dart';
+import 'auth/login_screen.dart';
 import 'complete_screen.dart';
 import 'finding_screen.dart';
 import 'home_screen.dart';
@@ -57,6 +58,17 @@ class _FlowRoot extends StatelessWidget {
   void _openProfile(BuildContext context) =>
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
 
+  /// Booking requires a signed-in rider. Guests are sent to login first; the
+  /// action runs only if they end up authenticated.
+  Future<void> _requireAuth(BuildContext context, AppState app, VoidCallback onAuthed) async {
+    if (app.isAuthenticated) {
+      onAuthed();
+      return;
+    }
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+    if (context.mounted && app.isAuthenticated) onAuthed();
+  }
+
   Widget _screenFor(BuildContext context, AppState app) {
     final t = app.t;
     switch (app.step) {
@@ -71,8 +83,8 @@ class _FlowRoot extends StatelessWidget {
           center: app.pickupLatLng,
           locationLabel: app.pickup.name,
           locating: app.locating,
-          onSearch: () => app.go(FlowStep.search),
-          onSavedPick: () => app.chooseDestination(_bureau),
+          onSearch: () => _requireAuth(context, app, () => app.go(FlowStep.search)),
+          onSavedPick: () => _requireAuth(context, app, () => app.chooseDestination(_bureau)),
           onRecenter: app.detectLocation,
           onProfile: () => _openProfile(context),
         );
